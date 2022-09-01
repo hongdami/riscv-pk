@@ -255,6 +255,11 @@ do_reset:
   li x31, 0
   csrw mscratch, x0
 
+  # init fp, then init fp regs
+  li a0, MSTATUS_FS & (MSTATUS_FS >> 1)
+  csrs mstatus, a0
+  csrwi fcsr, 0
+
   fmv.w.x f0, x0
   fmv.w.x f1, x0
   fmv.w.x f2, x0
