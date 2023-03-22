@@ -1,0 +1,53 @@
+/dts-v1/;
+
+/ {
+	L18: soc {
+		L2: clint@2000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <&L4 3 &L4 7>;
+			reg = <0x1f 0x10000000 0x0 0x10000>;
+			reg-names = "control";
+			clock-frequency-mhz = <500>;
+		};
+	/*	L14: serial@60000000 {
+			compatible = "xilinx,uartlite";
+			//interrupt-parent = <&L1>;
+			interrupts = <3>;
+			reg = <0x1f 0x00050000 0x0 0x1000>;
+			reg-names = "control";
+		};*/
+		serial0: serial0@1f00050000 {
+                	//compatible = "ns16550a";
+                	compatible = "ibm,opal-console-hvsi","ns16550a";
+                        reg = <0x1f 0xa0140000 0x0 0x00000200>;
+                	interrupts = <1>;
+                	//clock-frequency = <5000000>;
+                	//clock-frequency = <15000000>;
+                	//clock-frequency = <10000000>;
+			clock-frequency = <1562500>;
+			reg-shift = <2>;
+        	};
+        
+    	
+		sdhci: mmc {
+      			compatible = "nemu-sdhost";
+			reg = <0x1f 0x40002000 0x0 0x1000>;
+    		};
+	};
+  	
+	aliases {
+                serial0 = "/soc/serial0@1fa0140000";
+        };
+
+	chosen {
+    		bootargs = "root=/dev/mmcblk0 rootfstype=ext4 ro rootwait earlycon console=ttyS0,9600n8 console=hvc0";
+  	};
+	L11: memory@100000000 {
+		device_type = "memory";
+		reg = <0x20 0x00000000 0x0 0x80000000>;
+	};
+
+    __symbols__ {
+        uart0 = "/soc/serial0@1fa0140000";
+    };
+};

@@ -1,0 +1,100 @@
+/dts-v1/;
+
+/ {
+	L18: soc {
+		L2: clint@2000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <&L4 3 &L4 7>;
+			reg = <0x1f 0x10000000 0x0 0x10000>;
+			reg-names = "control";
+			clock-frequency-mhz = <500>;
+		};
+		//L14: serial@60000000 {
+		//	compatible = "xilinx,uartlite";
+		//	//interrupt-parent = <&L1>;
+		//	interrupts = <3>;
+		//	reg = <0x1f 0x00050000 0x0 0x1000>;
+		//	reg-names = "control";
+		//};
+		serial0: serial0@1f00050000 {
+                	//compatible = "ns16550a";
+                	compatible = "ibm,opal-console-hvsi","ns16550a";
+                    reg = <0x1f 0x00050000 0x0 0x00000200>;
+                	interrupts = <1>;
+                	clock-frequency = <10000000>;
+			        reg-shift = <2>;
+        	};
+
+        PLIC: interrupt-controller@1f1c000000 {
+            #interrupt-cells = <1>;
+            compatible = "riscv,plic0";
+            interrupt-controller;
+            //interrupts-extended = <&L4 9 &L4 11 &L5 9 &L5 11>;
+            //interrupts-extended = <&L4 0xb &L4 0x9 &L5 0xb &L5 0x9>;
+            interrupts-extended = <&L4 0xb &L4 0x9>;
+            //reg = <0 0xc000000 0 0x4000000>;
+            //reg = <0 0x3c000000 0 0x4000000>;
+            reg = <0x1f 0x1c000000 0 0x4000000>;
+            reg-names = "control";
+            riscv,max-priority = <7>;
+            riscv,ndev = <64>;
+        };
+
+        pcie_0_pcie_s10: pcie@1fe0000000 {
+                    compatible = "altr,pcie-root-port-2.0";
+                    reg = <0x0000001f 0xe0000000 0x0 0x00200000>,
+                          <0x0000001f 0xc1000000 0x0 0x02000000>,
+                          <0x0000001f 0xc0000000 0x0 0x00008000>;
+                    reg-names = "Hip", "Txs", "Cra";
+                    interrupt-parent = <&PLIC>;
+                    interrupts = <0x0 0x14 0x4>;
+                    interrupt-controller;
+                    #interrupt-cells = <0x1>;
+                    device_type = "pci";
+                    bus-range = <0x0000000 0x000000ff>;
+                    ranges = <0x03000000 0x00000000 0x00000000 0x0000001f 0xc1000000 0x00000000 0x10000000>;
+                    msi-parent = <&pcie_0_msi_irq>;
+                    #address-cells = <0x3>;
+                    #size-cells = <0x2>;
+                    dma-coherent;
+                    interrupt-map-mask = <0x0 0x0 0x0 0x7>;
+                    interrupt-map = <0x0 0x0 0x0 0x1 &pcie_0_pcie_s10 0x1>,
+                                   <0x0 0x0 0x0 0x2 &pcie_0_pcie_s10 0x2>,
+                                   <0x0 0x0 0x0 0x3 &pcie_0_pcie_s10 0x3>,
+                                   <0x0 0x0 0x0 0x4 &pcie_0_pcie_s10 0x4>;                                       
+        }; //end pcie@1fe0000000 (pcie_0_pcie_s10)
+
+        pcie_0_msi_irq: msi@1fc0008080 {
+                    compatible = "altr,msi-1.0";
+                    reg = <0x0000001f 0xC0008080 0x0 0x00000010>,
+                          <0x0000001f 0xC0008000 0x0 0x00000080>;
+                    reg-names = "csr", "vector_slave";
+                    interrupt-parent = <&PLIC>;
+                    //interrupts = <0x0 0x13 0x4>;
+                    interrupts = <0x0 0x2 0x4>;
+                    msi-controller = <0x1>;
+                    num-vectors = <0x20>;                                       
+        }; //end msi@0x1fc0008080 (pcie_0_msi_irq)
+
+		sdhci: mmc {
+      			    compatible = "nemu-sdhost";
+			        reg = <0x1f 0x40002000 0x0 0x1000>;
+    	};
+	};
+  	
+	aliases {
+                serial0 = "/soc/serial0@1f00050000";
+    };
+
+	chosen {
+    		bootargs = "root=/dev/mmcblk0 rootfstype=ext4 ro rootwait earlycon console=ttyS0,38400n8 console=hvc0 loglevel=8 debug";
+  	};
+	L11: memory@100000000 {
+		device_type = "memory";
+		reg = <0x20 0x00000000 0x0 0x80000000>;
+	};
+
+    __symbols__ {
+        uart0 = "/soc/serial0@1f00050000";
+    };
+};
